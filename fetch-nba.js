@@ -1,4 +1,4 @@
-// [최신 fetch-nba.js] 날짜별 파일 생성 로직
+// [최신] fetch-nba.js (날짜 위치 수정판)
 const fs = require('fs');
 const path = require('path');
 
@@ -10,12 +10,16 @@ async function updateNBAData() {
         const sbData = await sbRes.json();
         const games = sbData.scoreboard.games;
 
+        // 경기가 없는 경우 처리
         if (!games || games.length === 0) {
-            console.log("경기 없음");
+            console.log("예정된 경기가 없습니다.");
             return;
         }
 
-        const gameDate = games[0].gameDate; // 예: "2026-01-26"
+        // [핵심 수정] 날짜 정보 위치 변경 (games[0] 내부가 아니라 scoreboard 바로 아래에 있음)
+        const gameDate = sbData.scoreboard.gameDate; 
+        console.log(`감지된 경기 날짜: ${gameDate}`); // 로그로 날짜 확인
+
         const enrichedGames = [];
 
         for (const game of games) {
@@ -29,6 +33,7 @@ async function updateNBAData() {
                 const pbpData = await pbpRes.json();
                 enrichedGames.push({ summary: game, boxscore: boxData.game, pbp: pbpData.game });
             } catch (e) {
+                console.warn(`상세 데이터 수집 실패 (${gameId}):`, e);
                 enrichedGames.push({ summary: game, boxscore: null, pbp: null });
             }
         }
@@ -37,14 +42,14 @@ async function updateNBAData() {
         const dataDir = path.join(__dirname, 'data');
         if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
 
-        // [핵심] 날짜 이름으로 파일 저장
+        // [핵심] 올바른 날짜 이름으로 파일 저장
         const fileName = `${gameDate}.json`;
         fs.writeFileSync(path.join(dataDir, fileName), JSON.stringify(enrichedGames, null, 2));
         
         // [핵심] latest.json도 갱신
         fs.writeFileSync(path.join(dataDir, 'latest.json'), JSON.stringify({ date: gameDate }, null, 2));
 
-        console.log(`저장 완료: ${fileName}`);
+        console.log(`[Success] 파일 저장 완료: ${fileName}`);
 
     } catch (error) {
         console.error("Error:", error);
