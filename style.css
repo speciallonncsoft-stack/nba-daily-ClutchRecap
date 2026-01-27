@@ -257,3 +257,11 @@ body {
     
     .content-scroll-area { padding: 15px; }
 }
+/* 선수 카드 이미지 최적화 */
+.player-card {
+    padding: 0 !important; /* 내부 패딩 제거 (이미지를 꽉 채우기 위해) */
+    text-align: center;
+}
+.player-card h3 {
+    margin-top: 10px;
+}
