@@ -45,10 +45,23 @@ body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-color);
     margin-right: 5px;
     display: inline-block;
 }
-
 .game-card {
     border: 1px solid #ddd;
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 8px;
+}
+/* 기존 CSS 코드 아래에 이 부분만 추가하세요 */
+
+/* 내러티브 태그 스타일 */
+.tag, .tag-sm {
+    background-color: #ebf8ff;
+    color: #3182ce;
+    padding: 2px 8px;
+    border-radius: 4px; /* 회원님 디자인에 맞춰 조금 각지게 수정 */
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 8px;
+    display: inline-block;
+    vertical-align: middle;
 }
