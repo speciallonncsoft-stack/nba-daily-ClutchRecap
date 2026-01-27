@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0   # 전체 히스토리를 가져와 충돌 방지
+          fetch-depth: 0   # 전체 기록을 가져와 push 충돌 방지
 
       - name: Setup Node
         uses: actions/setup-node@v2
@@ -26,13 +26,11 @@ jobs:
       - name: Run fetch script
         run: node fetch-nba.js
 
-      - name: Commit data
+      - name: Commit and Push data
         run: |
           git config --global user.name "nba-bot"
-          git config --global user.email "your-email@example.com"
+          git config --global user.email "bot@example.com"
           git add .
-          # 변경사항이 있을 때만 커밋 (에러 방지)
           git diff --quiet && git diff --staged --quiet || git commit -m "Update NBA Data"
-          # 웹사이트 수정본과 봇의 데이터를 안전하게 병합
           git pull --rebase origin main
           git push origin main
