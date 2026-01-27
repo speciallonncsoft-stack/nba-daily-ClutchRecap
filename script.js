@@ -3,87 +3,90 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchGrid = document.getElementById('matchGrid');
     const dateDisplay = document.getElementById('dateDisplay');
     
-    // 네비게이션 버튼
     const prevBtn = document.querySelector('.date-nav-btn.prev');
     const nextBtn = document.querySelector('.date-nav-btn.next');
 
-    // [핵심 수정] 안전한 날짜 초기화 (기본값: 오늘)
     let currentDate = new Date();
 
-    // [Helper] 날짜를 YYYY-MM-DD 문자열로 변환 (NaN 방지 로직 추가)
+    // [Helper] 날짜 포맷 (YYYY-MM-DD)
     function formatDateStr(date) {
-        if (!date || isNaN(date.getTime())) {
-            // 날짜가 깨졌다면 오늘 날짜로 강제 복구
-            date = new Date();
-        }
+        if (!date || isNaN(date.getTime())) date = new Date();
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
         const d = String(date.getDate()).padStart(2, '0');
         return `${y}-${m}-${d}`;
     }
 
-    // [Helper] 문자열(YYYY-MM-DD)을 Date 객체로 안전하게 변환
+    // [Helper] 문자열 -> Date 객체
     function parseDate(str) {
         if (!str) return new Date();
         const parts = str.split('-');
-        if (parts.length !== 3) return new Date();
-        // 월(Month)은 0부터 시작하므로 -1 해줌
         return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    // [Core] 데이터 로드 함수
-    async function loadDashboardData(dateStr) {
-        // 날짜 문자열 검증
-        if (dateStr.includes('NaN')) {
-            dateStr = formatDateStr(new Date()); // 오늘 날짜로 리셋
-            currentDate = new Date();
-        }
-
+    // [Core] 스마트 데이터 로드 함수 (자동 보정 기능 포함)
+    async function loadDashboardData(dateStr, isRetry = false) {
         try {
-            // 로딩 표시
-            dateDisplay.textContent = dateStr;
-            heroGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px;">데이터를 불러오는 중...</div>';
-            matchGrid.innerHTML = '';
+            // UI 초기화
+            if (!isRetry) {
+                dateDisplay.textContent = dateStr;
+                heroGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px;">데이터 스캔 중...</div>';
+                matchGrid.innerHTML = '';
+            }
 
-            // 해당 날짜 파일 요청
+            // 파일 요청
             const response = await fetch(`data/${dateStr}.json`);
             
             if (!response.ok) {
-                throw new Error("No data file");
+                throw new Error("404 Not Found");
             }
             
             const games = await response.json();
+            
+            // 성공 시 날짜 확정 및 렌더링
+            currentDate = parseDate(dateStr); 
+            dateDisplay.textContent = dateStr; 
             renderUI(games);
 
         } catch (error) {
-            console.warn(`[Data Load Error] ${dateStr}:`, error);
+            // [핵심] 실패 시 하루 전 날짜로 딱 한 번 자동 재시도
+            if (!isRetry) {
+                console.log(`[Smart Retry] ${dateStr} 데이터 없음. 하루 전 데이터 검색...`);
+                const yesterday = parseDate(dateStr);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = formatDateStr(yesterday);
+                
+                // 재귀 호출 (isRetry = true)
+                await loadDashboardData(yesterdayStr, true);
+                return;
+            }
+
+            // 재시도조차 실패했을 때 에러 표시
+            console.warn("데이터 로드 최종 실패");
             heroGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #718096; background: white; border-radius: 12px;">
                 <div style="font-size: 2rem; margin-bottom: 10px;">🏀</div>
-                <h3>해당 날짜(${dateStr})의 경기가 없습니다</h3>
-                <p>아직 경기가 시작되지 않았거나 데이터가 없습니다.</p>
+                <h3>경기 데이터가 없습니다</h3>
+                <p>${dateStr} 및 이전 날짜의 데이터를 찾을 수 없습니다.</p>
             </div>`;
             matchGrid.innerHTML = '';
         }
     }
 
-    // [Logic] UI 렌더링
+    // [UI] 렌더링 로직 (이전과 동일)
     function generateNarrative(game) {
         const tags = [];
         const summary = game.summary;
-        // 경기 종료(3) 상태일 때만 점수차 계산
         if (summary.gameStatus === 3) {
             const margin = Math.abs(summary.homeTeam.score - summary.awayTeam.score);
             if (margin <= 5) tags.push("#심장쫄깃_접전");
             else if (margin >= 20) tags.push("#일방적_완승");
-            // 추가 로직: 역전승 등 (play-by-play 데이터 필요)
         }
         return tags;
     }
 
     function getPlayerHighlight(player) {
+        if (!player || !player.statistics) return "";
         const s = player.statistics;
-        if (!s) return "";
-        
         const pts = s.points;
         const ast = s.assists;
         const reb = s.reboundsTotal;
@@ -92,12 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pts >= 20 && ast >= 10) return "#더블더블";
         if (pts >= 20 && reb >= 10) return "#골밑지배자";
         if (pts >= 20 && (s.threePointersMade / s.threePointersAttempted) >= 0.5) return "#고효율슈터";
-        
         return "";
     }
 
     function renderUI(games) {
-        // 1. 경기 결과 렌더링
         if (!games || games.length === 0) {
             matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
             return;
@@ -126,14 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }).join('');
 
-        // 2. 히어로 렌더링
         const allPlayers = games.flatMap(g => 
             (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
         ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
 
-        const topHeroes = allPlayers
-            .sort((a, b) => b.statistics.points - a.statistics.points)
-            .slice(0, 3);
+        const topHeroes = allPlayers.sort((a, b) => b.statistics.points - a.statistics.points).slice(0, 3);
 
         heroGrid.innerHTML = topHeroes.map(h => {
             const highlightTag = getPlayerHighlight(h);
@@ -151,35 +149,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    // [Event] 날짜 이동 버튼
+    // [Event] 버튼 핸들러
     prevBtn.addEventListener('click', () => {
-        // 하루 전으로 이동
         currentDate.setDate(currentDate.getDate() - 1);
         loadDashboardData(formatDateStr(currentDate));
     });
 
     nextBtn.addEventListener('click', () => {
-        // 하루 후로 이동
         currentDate.setDate(currentDate.getDate() + 1);
         loadDashboardData(formatDateStr(currentDate));
     });
 
     // [Init] 초기 실행
     async function init() {
+        // 1. latest.json 확인 시도
         try {
-            // 최신 데이터 날짜 확인
             const res = await fetch('data/latest.json');
             if (res.ok) {
                 const data = await res.json();
                 if (data.date) {
-                    currentDate = parseDate(data.date); // 안전한 파싱 사용
+                    currentDate = parseDate(data.date);
+                    loadDashboardData(data.date);
+                    return;
                 }
             }
         } catch (e) {
-            console.log("Latest file not found, using today.");
+            console.log("Latest file not found");
         }
-        // 에러가 나든 말든, currentDate(오늘 or 최신)로 로딩 시작
-        loadDashboardData(formatDateStr(currentDate));
+        
+        // 2. 실패 시 오늘 날짜로 시도 (실패하면 loadDashboardData 내부에서 자동으로 어제로 넘어감)
+        loadDashboardData(formatDateStr(new Date()));
     }
 
     init();
