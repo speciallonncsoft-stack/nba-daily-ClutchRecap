@@ -265,3 +265,84 @@ body {
 .player-card h3 {
     margin-top: 10px;
 }
+/* 3단계: 팀 엠블럼 및 경기 카드 고도화 */
+.match-content-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.team-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+/* 홈팀은 오른쪽 정렬을 위해 순서 뒤집기 효과 */
+.team-block:last-child {
+    justify-content: flex-end;
+}
+
+.team-logo {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-code {
+    font-weight: 800;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.team-record {
+    font-size: 0.75rem;
+    color: #718096;
+    margin-top: 2px;
+}
+
+.score {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #2d3748;
+}
+
+.vs-divider {
+    font-size: 0.8rem;
+    color: #cbd5e0;
+    margin: 0 10px;
+    font-weight: bold;
+}
+
+/* 선수 카드 이미지 스타일 보강 */
+.player-img-wrapper {
+    background: linear-gradient(to bottom, #edf2f7, #fff);
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 160px;
+    margin-bottom: 12px;
+    border-radius: 12px 12px 0 0;
+}
+.player-img-wrapper img {
+    height: 100%;
+    object-fit: contain;
+}
+.player-info {
+    padding: 0 20px 20px 20px;
+}
+.player-info h3 {
+    margin: 0 0 10px 0;
+}
+.player-info h3 small {
+    font-size: 0.8rem; 
+    font-weight: normal; 
+    color: #718096;
+    margin-left: 4px;
+}
