@@ -98,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return "";
     }
 
+// [UI] 렌더링 로직
     function renderUI(games) {
+        // 1. 경기 결과 렌더링 (기존과 동일)
         if (!games || games.length === 0) {
             matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
             return;
@@ -114,35 +116,48 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="match-content">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <span>${g.summary.awayTeam.teamTricode}</span>
+                            <span style="font-weight:bold;">${g.summary.awayTeam.teamTricode}</span>
                             <span style="font-size:1.4rem;">${g.summary.awayTeam.score}</span>
                         </div>
                         <span style="color:#cbd5e0; font-size: 0.9rem;">vs</span>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span style="font-size:1.4rem;">${g.summary.homeTeam.score}</span>
-                            <span>${g.summary.homeTeam.teamTricode}</span>
+                            <span style="font-weight:bold;">${g.summary.homeTeam.teamTricode}</span>
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
 
+        // 2. 히어로 렌더링 (이미지 추가됨!)
         const allPlayers = games.flatMap(g => 
             (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
         ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
 
-        const topHeroes = allPlayers.sort((a, b) => b.statistics.points - a.statistics.points).slice(0, 3);
+        const topHeroes = allPlayers
+            .sort((a, b) => b.statistics.points - a.statistics.points)
+            .slice(0, 3);
 
         heroGrid.innerHTML = topHeroes.map(h => {
             const highlightTag = getPlayerHighlight(h);
+            // [핵심] NBA 공식 이미지 URL 생성 (personId 활용)
+            const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${h.personId}.png`;
+            
             return `
-                <div class="player-card clutch-card">
-                    <div class="clutch-badge">${highlightTag || 'MVP'}</div>
-                    <h3>${h.familyName}</h3>
-                    <div class="player-stats">
-                        <span>${h.statistics.points} PTS</span> • 
-                        <span>${h.statistics.reboundsTotal} REB</span> • 
-                        <span>${h.statistics.assists} AST</span>
+                <div class="player-card clutch-card" style="padding-top: 0; overflow: hidden;">
+                    <div class="clutch-badge" style="z-index: 10;">${highlightTag || 'MVP'}</div>
+                    
+                    <div style="background: linear-gradient(to bottom, #edf2f7, #fff); display: flex; justify-content: center; align-items: flex-end; height: 150px; margin-bottom: 10px;">
+                        <img src="${imgUrl}" alt="${h.familyName}" style="height: 100%; object-fit: contain;" onerror="this.style.display='none'">
+                    </div>
+
+                    <div style="padding: 0 20px 20px 20px;">
+                        <h3 style="margin: 0 0 10px 0;">${h.familyName} <span style="font-size:0.8rem; font-weight:normal; color:#718096;">${h.firstName}</span></h3>
+                        <div class="player-stats">
+                            <span>${h.statistics.points} PTS</span> • 
+                            <span>${h.statistics.reboundsTotal} REB</span> • 
+                            <span>${h.statistics.assists} AST</span>
+                        </div>
                     </div>
                 </div>
             `;
