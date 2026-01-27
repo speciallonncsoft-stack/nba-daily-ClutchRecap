@@ -98,9 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return "";
     }
 
-// [UI] 렌더링 로직
+// [UI] 렌더링 로직 (팀 엠블럼 + 승패 + 순위 추가)
     function renderUI(games) {
-        // 1. 경기 결과 렌더링 (기존과 동일)
+        // 1. 경기 결과 렌더링
         if (!games || games.length === 0) {
             matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
             return;
@@ -108,28 +108,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
         matchGrid.innerHTML = games.map(g => {
             const tags = generateNarrative(g);
+            
+            // 데이터 추출 (없을 경우를 대비해 안전하게 || 사용)
+            const home = g.summary.homeTeam;
+            const away = g.summary.awayTeam;
+
+            // 로고 URL (NBA 공식 CDN)
+            const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
+            const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
+
+            // 기록 (예: 35-10)
+            const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
+            const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
+
+            // 순위 (데이터가 있으면 표시) - seed 정보가 없을 수도 있음
+            // const homeRank = home.seed ? `<span class="rank-badge">#${home.seed}</span>` : '';
+            // const awayRank = away.seed ? `<span class="rank-badge">#${away.seed}</span>` : '';
+
             return `
                 <div class="match-card">
                     <div class="match-header">
-                        <span>${g.summary.gameStatusText}</span>
-                        <div>${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
+                        <span style="font-weight:600; font-size: 0.8rem;">${g.summary.gameStatusText}</span>
+                        <div style="display:flex; gap:5px;">${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
                     </div>
-                    <div class="match-content">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-weight:bold;">${g.summary.awayTeam.teamTricode}</span>
-                            <span style="font-size:1.4rem;">${g.summary.awayTeam.score}</span>
+                    
+                    <div class="match-content-grid">
+                        <div class="team-block">
+                            <img src="${awayLogo}" class="team-logo" alt="${away.teamTricode}">
+                            <div class="team-info">
+                                <span class="team-code">${away.teamTricode}</span>
+                                <span class="team-record">${awayRec}</span>
+                            </div>
+                            <span class="score">${away.score}</span>
                         </div>
-                        <span style="color:#cbd5e0; font-size: 0.9rem;">vs</span>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <span style="font-size:1.4rem;">${g.summary.homeTeam.score}</span>
-                            <span style="font-weight:bold;">${g.summary.homeTeam.teamTricode}</span>
+
+                        <div class="vs-divider">
+                            <span>vs</span>
+                        </div>
+
+                        <div class="team-block">
+                            <span class="score">${home.score}</span>
+                            <div class="team-info" style="align-items: flex-end;">
+                                <span class="team-code">${home.teamTricode}</span>
+                                <span class="team-record">${homeRec}</span>
+                            </div>
+                            <img src="${homeLogo}" class="team-logo" alt="${home.teamTricode}">
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
 
-        // 2. 히어로 렌더링 (이미지 추가됨!)
+        // 2. 히어로 렌더링 (이전 단계 2번 코드 유지)
         const allPlayers = games.flatMap(g => 
             (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
         ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
@@ -140,19 +170,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         heroGrid.innerHTML = topHeroes.map(h => {
             const highlightTag = getPlayerHighlight(h);
-            // [핵심] NBA 공식 이미지 URL 생성 (personId 활용)
             const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${h.personId}.png`;
             
             return `
-                <div class="player-card clutch-card" style="padding-top: 0; overflow: hidden;">
-                    <div class="clutch-badge" style="z-index: 10;">${highlightTag || 'MVP'}</div>
-                    
-                    <div style="background: linear-gradient(to bottom, #edf2f7, #fff); display: flex; justify-content: center; align-items: flex-end; height: 150px; margin-bottom: 10px;">
-                        <img src="${imgUrl}" alt="${h.familyName}" style="height: 100%; object-fit: contain;" onerror="this.style.display='none'">
+                <div class="player-card clutch-card">
+                    <div class="clutch-badge">${highlightTag || 'MVP'}</div>
+                    <div class="player-img-wrapper">
+                        <img src="${imgUrl}" alt="${h.familyName}" onerror="this.style.display='none'">
                     </div>
-
-                    <div style="padding: 0 20px 20px 20px;">
-                        <h3 style="margin: 0 0 10px 0;">${h.familyName} <span style="font-size:0.8rem; font-weight:normal; color:#718096;">${h.firstName}</span></h3>
+                    <div class="player-info">
+                        <h3>${h.familyName} <small>${h.firstName}</small></h3>
                         <div class="player-stats">
                             <span>${h.statistics.points} PTS</span> • 
                             <span>${h.statistics.reboundsTotal} REB</span> • 
