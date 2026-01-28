@@ -2,88 +2,144 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>NBA Dashboard (Popup Logic Applied)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Game Dashboard</title>
     <style>
-        /* UI 디자인: 가독성을 위한 카드 레이아웃 */
-        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card { 
-            background: white; padding: 20px; border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
-            transition: transform 0.2s;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
         }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
-        .header { display: flex; justify-content: space-between; color: #666; font-size: 0.9em; margin-bottom: 10px; }
-        .scores { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.2em; }
-        .team { text-align: center; }
-        .vs { color: #999; font-size: 0.8em; }
-        .note { margin-top: 10px; font-size: 0.8em; color: #1d428a; text-align: center; }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .game-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .game-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer; /* 클릭 가능 표시 */
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            background-color: #fafafa;
+        }
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .score {
+            font-size: 1.5rem;
+            color: #000;
+        }
+        .status {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .vs {
+            color: #888;
+            margin: 0 15px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
-    <h2>🏀 NBA Daily Results</h2>
-    <div id="game-container" class="grid"></div>
+    <div class="container">
+        <h1>NBA Game Results</h1>
+        <div id="game-list" class="game-list">
+            </div>
+    </div>
 
     <script>
-        // [Logic 1] Data Structure (Confirmed)
-        // 백엔드 없이 프론트엔드 테스트를 위한 JSON 더미 데이터
+        // 1. 더미 데이터 (JSON 형태 시뮬레이션)
         const games = [
-            { id: "0022500659", home: "ATL", away: "IND", h_score: 132, a_score: 116, status: "Final" },
-            { id: "0022500660", home: "BOS", away: "POR", h_score: 102, a_score: 94, status: "Final" },
-            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" }
+            {
+                gameId: "0022500659",
+                homeTeam: "ATL",
+                awayTeam: "IND",
+                homeScore: 111,
+                awayScore: 113,
+                status: "Final"
+            },
+            {
+                gameId: "0022500660",
+                homeTeam: "BOS",
+                awayTeam: "MIA",
+                homeScore: 98,
+                awayScore: 95,
+                status: "Final"
+            },
+            {
+                gameId: "0022500661",
+                homeTeam: "LAL",
+                awayTeam: "GSW",
+                homeScore: 120,
+                awayScore: 125,
+                status: "Final"
+            }
         ];
 
-        // [Logic 2] URL Generation Rule (Inference based on constraints)
-        // 요구사항: https://www.nba.com/game/{away}-{home}-{id}/box-score
-        // 상세: 팀 약어는 소문자로 변환해야 실제 URL과 매핑됨.
-        function generateUrl(game) {
-            const away = game.away.toLowerCase();
-            const home = game.home.toLowerCase();
-            return `https://www.nba.com/game/${away}-${home}-${game.id}/box-score`;
+        // 2. 팝업 열기 함수 (이전 대화에서 합의된 로직)
+        function openNbaBoxScore(gameId, homeTeam, awayTeam) {
+            // URL 패턴: https://www.nba.com/game/{away}-{home}-{id}/box-score
+            const home = homeTeam.toLowerCase();
+            const away = awayTeam.toLowerCase();
+            const url = `https://www.nba.com/game/${away}-vs-${home}-${gameId}/box-score`;
+
+            // 팝업 설정
+            const windowName = `nba_boxscore_${gameId}`;
+            const features = 'width=1280,height=900,resizable=yes,scrollbars=yes';
+
+            window.open(url, windowName, features);
         }
 
-        // [Logic 3] Popup Implementation (Solution to Iframe blocking)
-        // Iframe 차단을 우회하기 위해 window.open 사용
-        function openPopup(url) {
-            const width = 1280;
-            const height = 900;
-            // 듀얼 모니터 등을 고려한 중앙 정렬 계산
-            const left = (window.screen.width - width) / 2;
-            const top = (window.screen.height - height) / 2;
-            
-            window.open(url, 'nbaBoxScore', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
-        }
+        // 3. 리스트 렌더링 로직
+        const listContainer = document.getElementById('game-list');
 
-        // [Logic 4] Rendering
-        const container = document.getElementById('game-container');
-        
         games.forEach(game => {
             const card = document.createElement('div');
-            card.className = 'card';
+            card.className = 'game-card';
             
-            // 클릭 이벤트 바인딩
-            card.onclick = () => openPopup(generateUrl(game));
-
+            // 카드 내부 HTML 구성
             card.innerHTML = `
-                <div class="header">
-                    <span>${game.status}</span>
-                    <span>ID: ${game.id}</span>
+                <div class="team-info">
+                    <span>${game.awayTeam}</span>
+                    <span class="score">${game.awayScore}</span>
                 </div>
-                <div class="scores">
-                    <div class="team">
-                        <div>${game.away}</div>
-                        <div style="color:${game.a_score > game.h_score ? '#1d428a' : '#333'}">${game.a_score}</div>
-                    </div>
-                    <span class="vs">@</span>
-                    <div class="team">
-                        <div>${game.home}</div>
-                        <div style="color:${game.h_score > game.a_score ? '#1d428a' : '#333'}">${game.h_score}</div>
-                    </div>
+                <div class="vs">@</div>
+                <div class="team-info">
+                    <span class="score">${game.homeScore}</span>
+                    <span>${game.homeTeam}</span>
                 </div>
-                <div class="note">Click for Details (Popup) ↗</div>
+                <div class="status">${game.status}</div>
             `;
-            container.appendChild(card);
+
+            // 클릭 이벤트 리스너 추가
+            card.addEventListener('click', () => {
+                openNbaBoxScore(game.gameId, game.homeTeam, game.awayTeam);
+            });
+
+            listContainer.appendChild(card);
         });
     </script>
 </body>
