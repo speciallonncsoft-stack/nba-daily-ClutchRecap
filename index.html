@@ -2,224 +2,105 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Daily Clutch | MVP Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Daily Clutch | MVP Dashboard</title>
 
-    <link rel="stylesheet" as="style" crossorigin
-        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
-    <link rel="stylesheet" href="style.css">
-    
-    <style>
-        /* JS로 주입될 경기 카드 스타일 (기존 디자인 유지용) */
-        .match-card {
-            background-color: #fff;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #eee;
-            cursor: pointer; /* 클릭 가능하다는 표시 */
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .match-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-            border-color: #1d428a; /* NBA Blue interaction */
-        }
-        .match-status { font-size: 12px; font-weight: 600; color: #666; display: flex; justify-content: space-between; }
-        .match-teams { display: flex; justify-content: space-between; align-items: center; }
-        .team-block { display: flex; flex-direction: column; align-items: center; width: 40%; }
-        .team-code { font-size: 18px; font-weight: 800; color: #333; margin-bottom: 4px; }
-        .team-score { font-size: 24px; font-weight: 700; color: #111; }
-        .team-score.win { color: #1d428a; }
-        .vs-divider { font-size: 12px; color: #999; font-weight: 600; }
-        .click-guide { font-size: 11px; text-align: center; color: #1d428a; margin-top: 4px; opacity: 0.8; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>NBA<br>Daily Clutch</h2>
-            </div>
+    
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>NBA<br>Daily Clutch</h2>
+            </div>
 
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="home">
-                    <span class="icon">🏠</span>
-                    <span class="label">Home</span>
-                </a>
-                <a href="#" class="nav-item" data-page="schedule">
-                    <span class="icon">📅</span>
-                    <span class="label">Schedule</span>
-                </a>
-                <a href="#" class="nav-item" data-page="standings">
-                    <span class="icon">🏆</span>
-                    <span class="label">Standings</span>
-                </a>
-            </nav>
-        </aside>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="home">
+                    <span class="icon">🏠</span>
+                    <span class="label">Home</span>
+                </a>
+                <a href="#" class="nav-item" data-page="schedule">
+                    <span class="icon">📅</span>
+                    <span class="label">Schedule</span>
+                </a>
+                <a href="#" class="nav-item" data-page="standings">
+                    <span class="icon">🏆</span>
+                    <span class="label">Standings</span>
+                </a>
+            </nav>
+        </aside>
 
-        <main class="main-content">
-            <header class="top-header">
-                <div class="header-left">
-                    <button id="mobileMenuBtn" class="mobile-menu-btn">
-                        <span>☰</span>
-                    </button>
-                </div>
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn">
+                        <span>☰</span>
+                    </button>
+                </div>
 
-                <div class="header-center">
-                    <div class="date-picker-container">
-                        <button class="date-nav-btn prev">‹</button>
-                        <span id="dateDisplay" class="date-display">Loading...</span>
-                        <button class="date-nav-btn next">›</button>
-                    </div>
-                </div>
+                <div class="header-center">
+                    <div class="date-picker-container">
+                        <button class="date-nav-btn prev">‹</button>
+                        <span id="dateDisplay" class="date-display">Loading...</span>
+                        <button class="date-nav-btn next">›</button>
+                    </div>
+                </div>
 
-                <div class="header-right">
-                    <div class="ticker-container">
-                        <div id="tickerWrapper" class="ticker-wrapper">
-                            </div>
-                    </div>
-                </div>
-            </header>
+                <div class="header-right">
+                    <div class="ticker-container">
+                        <div id="tickerWrapper" class="ticker-wrapper">
+                            </div>
+                    </div>
+                </div>
+            </header>
 
-            <div id="contentArea" class="content-scroll-area">
-                <section class="hero-section">
-                    <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
-                    <div id="heroGrid" class="hero-grid">
-                        <div style="padding:20px; color:#888;">(Hero Data Loaded)</div>
-                    </div>
-                </section>
+            <div id="contentArea" class="content-scroll-area">
+                <section class="hero-section">
+                    <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
+                    <div id="heroGrid" class="hero-grid">
+                        </div>
+                </section>
 
-                <section class="match-section">
-                    <h2 class="section-title">Game Results</h2>
-                    <div id="matchGrid" class="match-grid"></div>
-                </section>
-            </div>
-        </main>
-    </div>
+                <section class="match-section">
+                    <h2 class="section-title">Game Results</h2>
+                    <div id="matchGrid" class="match-grid">
+                        </div>
+                </section>
+            </div>
+        </main>
+    </div>
 
-    <div id="gameModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 id="modalTitle">Game Details</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-score-summary">
-                    <div class="modal-team">
-                        <div class="team-logo large" id="modalHomeLogo">H</div>
-                        <span id="modalHomeName">HOME</span>
-                        <span class="modal-score" id="modalHomeScore">0</span>
-                    </div>
-                    <div class="modal-vs">FINAL</div>
-                    <div class="modal-team">
-                        <div class="team-logo large" id="modalAwayLogo">A</div>
-                        <span id="modalAwayName">AWAY</span>
-                        <span class="modal-score" id="modalAwayScore">0</span>
-                    </div>
-                </div>
-                <div id="modalStatsContent">
-                    </div>
-            </div>
-        </div>
-    </div>
+    <div id="gameModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Game Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-score-summary">
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalHomeLogo">H</div>
+                        <span id="modalHomeName">HOME</span>
+                        <span class="modal-score" id="modalHomeScore">0</span>
+                    </div>
+                    <div class="modal-vs">FINAL</div>
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalAwayLogo">A</div>
+                        <span id="modalAwayName">AWAY</span>
+                        <span class="modal-score" id="modalAwayScore">0</span>
+                    </div>
+                </div>
+                <div id="modalStatsContent">
+                    </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // 1. Data Definitions (01-26 Results based on real schedule/context)
-        // 사용자가 언급한 IND vs ATL 경기 포함
-        const gamesData = [
-            { 
-                id: "0022500659", 
-                home: "ATL", away: "IND", 
-                h_score: 132, a_score: 116, 
-                status: "Final" 
-            },
-            { 
-                id: "0022500660", 
-                home: "BOS", away: "POR", 
-                h_score: 102, a_score: 94, 
-                status: "Final" 
-            },
-            { 
-                id: "0022500661", 
-                home: "LAL", away: "CHI", 
-                h_score: 129, a_score: 118, 
-                status: "Final" 
-            },
-            { 
-                id: "0022500662", 
-                home: "GSW", away: "PHI", 
-                h_score: 119, a_score: 107, 
-                status: "Final" 
-            }
-        ];
-
-        // 2. GUI Rendering Logic
-        function renderDashboard() {
-            // 날짜 세팅
-            const today = new Date().toISOString().split('T')[0];
-            const dateEl = document.getElementById('dateDisplay');
-            if(dateEl) dateEl.innerText = today;
-
-            // 경기 결과 렌더링
-            const grid = document.getElementById('matchGrid');
-            if(!grid) return;
-            
-            grid.innerHTML = ''; // 초기화
-
-            gamesData.forEach(game => {
-                // [CRITICAL] <a>태그를 쓰지 않고 div를 생성하여 레이아웃 깨짐 방지
-                const card = document.createElement('div');
-                card.className = 'match-card'; // 상단 style 태그의 클래스 사용
-
-                // [LOGIC] URL 생성 및 클릭 이벤트 (window.open)
-                // Pattern: https://www.nba.com/game/{away}-vs-{home}-{id}/box-score#box-score
-                card.onclick = function() {
-                    const away = game.away.toLowerCase();
-                    const home = game.home.toLowerCase();
-                    const url = `https://www.nba.com/game/${away}-vs-${home}-${game.id}/box-score#box-score`;
-                    
-                    // 새 탭/창에서 열기
-                    window.open(url, '_blank');
-                };
-
-                // 승리 팀 색상 처리를 위한 로직
-                const homeWin = game.h_score > game.a_score ? 'win' : '';
-                const awayWin = game.a_score > game.h_score ? 'win' : '';
-
-                // 내부 GUI 구성 (HTML string)
-                card.innerHTML = `
-                    <div class="match-status">
-                        <span>${game.status}</span>
-                        <span style="font-family: monospace;">#${game.id}</span>
-                    </div>
-                    <div class="match-teams">
-                        <div class="team-block">
-                            <span class="team-code">${game.away}</span>
-                            <span class="team-score ${awayWin}">${game.a_score}</span>
-                        </div>
-                        <span class="vs-divider">@</span>
-                        <div class="team-block">
-                            <span class="team-code">${game.home}</span>
-                            <span class="team-score ${homeWin}">${game.h_score}</span>
-                        </div>
-                    </div>
-                    <div class="click-guide">Click for Box Score ↗</div>
-                `;
-
-                grid.appendChild(card);
-            });
-        }
-
-        // 3. Initialize
-        document.addEventListener('DOMContentLoaded', renderDashboard);
-    </script>
+    <script src="script.js"></script>
 </body>
-</html>
