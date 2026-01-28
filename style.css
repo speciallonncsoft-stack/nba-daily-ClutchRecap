@@ -346,3 +346,59 @@ body {
     color: #718096;
     margin-left: 4px;
 }
+/* --- Game Card Grid Layout --- */
+.match-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* 반응형 그리드 */
+    gap: 20px;
+    padding: 10px 0;
+}
+
+/* --- Game Card Design --- */
+.game-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer; /* 클릭 가능 표시 */
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    border-color: #3b82f6; /* 호버 시 강조색 (예: 파란색) */
+}
+
+.game-card .match-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.game-card .match-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.game-card .team-score {
+    color: #111;
+}
+
+.game-card .vs-badge {
+    font-size: 0.8rem;
+    color: #888;
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
