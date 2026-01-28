@@ -10,64 +10,39 @@
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
     <link rel="stylesheet" href="style.css">
+    
     <style>
-        /* 동적 생성되는 경기 카드를 위한 임시 스타일 (style.css에 병합 권장) */
-        :root { --card-bg: #ffffff; --text-main: #333; --accent-color: #1d428a; }
-        
-        .match-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px 0;
-        }
-
         .match-card {
-            background: var(--card-bg);
+            background: #fff;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             border: 1px solid #eee;
-        }
-
-        .match-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            border-color: var(--accent-color);
-        }
-
-        .match-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .match-score-board {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .team-info {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            font-weight: 700;
+            justify-content: space-between;
         }
-
+        .match-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.1);
+            border-color: #1d428a;
+        }
+        .match-header {
+            display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; margin-bottom: 15px;
+        }
+        .match-score-board {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .team-info {
+            display: flex; flex-direction: column; align-items: center; font-weight: 700;
+        }
         .team-code { font-size: 1.2rem; margin-bottom: 4px; }
-        .score { font-size: 1.5rem; color: var(--text-main); }
-        .win-score { color: var(--accent-color); }
-        .vs-divider { color: #ccc; font-size: 0.9rem; }
-        
+        .score { font-size: 1.5rem; color: #333; }
+        .win-score { color: #1d428a; } /* NBA Blue */
         .click-hint {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #888;
+            margin-top: 15px; text-align: center; font-size: 0.75rem; color: #888;
         }
     </style>
 </head>
@@ -107,7 +82,7 @@
                 <div class="header-center">
                     <div class="date-picker-container">
                         <button class="date-nav-btn prev">‹</button>
-                        <span id="dateDisplay" class="date-display">2025-01-28</span>
+                        <span id="dateDisplay" class="date-display">Loading...</span>
                         <button class="date-nav-btn next">›</button>
                     </div>
                 </div>
@@ -124,8 +99,7 @@
                 <section class="hero-section">
                     <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
                     <div id="heroGrid" class="hero-grid">
-                        <div style="padding: 20px; color: #666;">(Hero Section Placeholder)</div>
-                    </div>
+                         </div>
                 </section>
 
                 <section class="match-section">
@@ -143,37 +117,47 @@
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
+                <div class="modal-score-summary">
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalHomeLogo">H</div>
+                        <span id="modalHomeName">HOME</span>
+                        <span class="modal-score" id="modalHomeScore">0</span>
+                    </div>
+                    <div class="modal-vs">FINAL</div>
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalAwayLogo">A</div>
+                        <span id="modalAwayName">AWAY</span>
+                        <span class="modal-score" id="modalAwayScore">0</span>
+                    </div>
                 </div>
+                <div id="modalStatsContent">
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // 1. Dummy Data (Backendless Testing)
+        // [Logic 1] Dummy Data for Testing
         const gamesData = [
             { id: "0022500659", home: "ATL", away: "IND", h_score: 132, a_score: 116, status: "Final" },
             { id: "0022500660", home: "BOS", away: "POR", h_score: 102, a_score: 94, status: "Final" },
-            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" },
-            { id: "0022500662", home: "GSW", away: "PHI", h_score: 119, a_score: 107, status: "Final" }
+            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" }
         ];
 
-        // 2. URL Construction Logic
+        // [Logic 2] URL Generation Logic (Inference based on User Req)
         function getBoxScoreUrl(game) {
-            // https://clevelandconstruction.com/
-            // 사용자 정의 규칙: https://www.nba.com/game/{away}-{home}-{id}/box-score
-            // 팀 약어는 소문자로 변환 (예: LAL -> lal)
-            
+            // Rule: https://www.nba.com/game/{away}-{home}-{id}/box-score
             const away = game.away.toLowerCase();
             const home = game.home.toLowerCase();
-            const id = game.id;
-
-            // [Validation Note]
-            // NBA.com의 실제 URL은 종종 away-vs-home 형식을 사용하므로, 
-            // 만약 링크가 404를 반환할 경우 아래 템플릿에 '-vs-'를 추가해야 할 수 있습니다.
-            // 현재는 요청하신 명세를 그대로 따릅니다.
-            return `https://www.nba.com/game/${away}-${home}-${id}/box-score`;
+            
+            // [Validation Note]: NBA.com URL 패턴이 종종 away-vs-home 형식을 사용함.
+            // 404 발생 시 아래 라인으로 교체 필요:
+            // return `https://www.nba.com/game/${away}-vs-${home}-${game.id}/box-score`;
+            
+            return `https://www.nba.com/game/${away}-${home}-${game.id}/box-score`;
         }
 
-        // 3. Popup Logic (CSP Bypass)
+        // [Logic 3] Popup Implementation (Window.open)
         function openBoxScorePopup(url) {
             const width = 1280;
             const height = 900;
@@ -183,16 +167,18 @@
             window.open(url, 'nbaBoxScore', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
         }
 
-        // 4. Rendering Logic
+        // [Logic 4] Rendering Logic
         function renderMatches() {
             const grid = document.getElementById('matchGrid');
-            grid.innerHTML = ''; // Clear existing content
+            if (!grid) return; // 안전 장치
+            
+            grid.innerHTML = ''; // 초기화
 
             gamesData.forEach(game => {
                 const card = document.createElement('div');
-                card.className = 'match-card';
-                
-                // 클릭 이벤트: 팝업 열기
+                card.className = 'match-card'; // CSS 클래스 적용
+
+                // 클릭 이벤트: 팝업 호출 (모달 X)
                 card.onclick = () => {
                     const url = getBoxScoreUrl(game);
                     openBoxScorePopup(url);
@@ -203,34 +189,35 @@
 
                 card.innerHTML = `
                     <div class="match-header">
-                        <span style="font-weight:bold; color:#000;">${game.status}</span>
-                        <span>#${game.id}</span>
+                        <span style="font-weight:bold; color:#333;">${game.status}</span>
+                        <span>ID: ${game.id}</span>
                     </div>
                     <div class="match-score-board">
                         <div class="team-info">
                             <span class="team-code">${game.away}</span>
                             <span class="score ${isAwayWin ? 'win-score' : ''}">${game.a_score}</span>
                         </div>
-                        <span class="vs-divider">@</span>
+                        <span style="color:#999; font-size:0.9rem;">@</span>
                         <div class="team-info">
                             <span class="team-code">${game.home}</span>
                             <span class="score ${isHomeWin ? 'win-score' : ''}">${game.h_score}</span>
                         </div>
                     </div>
-                    <div class="click-hint">Click for Box Score ↗</div>
+                    <div class="click-hint">Click for Box Score (Popup) ↗</div>
                 `;
 
                 grid.appendChild(card);
             });
         }
 
-        // Initialize
+        // Initialization
         document.addEventListener('DOMContentLoaded', () => {
             renderMatches();
             
-            // 날짜 표시 (임시)
+            // 날짜 표시
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('dateDisplay').textContent = today;
+            const dateEl = document.getElementById('dateDisplay');
+            if(dateEl) dateEl.textContent = today;
         });
     </script>
 </body>
