@@ -2,201 +2,89 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Game Dashboard (Prototype)</title>
+    <title>NBA Dashboard (Popup Logic Applied)</title>
     <style>
-        :root {
-            --primary-bg: #f4f4f4;
-            --card-bg: #ffffff;
-            --text-color: #333;
-            --accent-color: #1d428a; /* NBA Blue */
+        /* UI 디자인: 가독성을 위한 카드 레이아웃 */
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .card { 
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
+            transition: transform 0.2s;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--primary-bg);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-color);
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .game-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            padding: 20px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
-        }
-
-        .game-header {
-            font-size: 0.9em;
-            color: #666;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .score-board {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .team {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .team-code {
-            font-size: 1.5em;
-            margin-bottom: 5px;
-        }
-
-        .score {
-            font-size: 1.8em;
-            color: var(--accent-color);
-        }
-
-        .vs {
-            color: #999;
-            font-size: 0.8em;
-        }
-
-        .status-badge {
-            background-color: #e0e0e0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            align-self: flex-start;
-        }
-
-        .status-badge.final {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
+        .header { display: flex; justify-content: space-between; color: #666; font-size: 0.9em; margin-bottom: 10px; }
+        .scores { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.2em; }
+        .team { text-align: center; }
+        .vs { color: #999; font-size: 0.8em; }
+        .note { margin-top: 10px; font-size: 0.8em; color: #1d428a; text-align: center; }
     </style>
 </head>
 <body>
 
-    <h1>🏀 NBA Daily Clutch</h1>
-    <div id="app" class="dashboard-grid">
-        </div>
+    <h2>🏀 NBA Daily Results</h2>
+    <div id="game-container" class="grid"></div>
 
     <script>
-        // 1. Data Logic: JSON Dummy Data
-        const gamesData = [
-            {
-                gameId: "0022500659",
-                homeTeam: "ATL",
-                awayTeam: "IND",
-                homeScore: 132,
-                awayScore: 116,
-                status: "Final"
-            },
-            {
-                gameId: "0022500660",
-                homeTeam: "BOS",
-                awayTeam: "POR",
-                homeScore: 102,
-                awayScore: 94,
-                status: "Final"
-            },
-            {
-                gameId: "0022500661",
-                homeTeam: "LAL",
-                awayTeam: "CHI",
-                homeScore: 129,
-                awayScore: 118,
-                status: "Final"
-            }
+        // [Logic 1] Data Structure (Confirmed)
+        // 백엔드 없이 프론트엔드 테스트를 위한 JSON 더미 데이터
+        const games = [
+            { id: "0022500659", home: "ATL", away: "IND", h_score: 132, a_score: 116, status: "Final" },
+            { id: "0022500660", home: "BOS", away: "POR", h_score: 102, a_score: 94, status: "Final" },
+            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" }
         ];
 
-        // 2. URL Generation Logic
-        function getBoxScoreUrl(game) {
-            // Rule: https://www.nba.com/game/{away}-{home}-{id}/box-score
-            // Note: 팀 약어는 소문자로 변환
-            const away = game.awayTeam.toLowerCase();
-            const home = game.homeTeam.toLowerCase();
-            const id = game.gameId;
-            
-            // 만약 NBA 사이트 구조 변경으로 링크가 작동하지 않으면 아래 포맷으로 변경 고려:
-            // return `https://www.nba.com/game/${away}-vs-${home}-${id}/box-score`;
-            
-            return `https://www.nba.com/game/${away}-${home}-${id}/box-score`;
+        // [Logic 2] URL Generation Rule (Inference based on constraints)
+        // 요구사항: https://www.nba.com/game/{away}-{home}-{id}/box-score
+        // 상세: 팀 약어는 소문자로 변환해야 실제 URL과 매핑됨.
+        function generateUrl(game) {
+            const away = game.away.toLowerCase();
+            const home = game.home.toLowerCase();
+            return `https://www.nba.com/game/${away}-${home}-${game.id}/box-score`;
         }
 
-        // 3. Render Logic
-        function renderDashboard() {
-            const app = document.getElementById('app');
-            app.innerHTML = ''; // 초기화
-
-            gamesData.forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'game-card';
-                
-                // 클릭 이벤트: 팝업 오픈
-                card.onclick = () => {
-                    const url = getBoxScoreUrl(game);
-                    // 팝업 설정: 1280x900
-                    window.open(url, 'nbaBoxScore', 'width=1280,height=900,scrollbars=yes,resizable=yes');
-                };
-
-                const isFinal = game.status === 'Final';
-                const statusClass = isFinal ? 'status-badge final' : 'status-badge';
-
-                card.innerHTML = `
-                    <div class="game-header">
-                        <span class="${statusClass}">${game.status}</span>
-                        <span>ID: ${game.gameId}</span>
-                    </div>
-                    <div class="score-board">
-                        <div class="team">
-                            <span class="team-code">${game.awayTeam}</span>
-                            <span class="score">${game.awayScore}</span>
-                        </div>
-                        <span class="vs">@</span>
-                        <div class="team">
-                            <span class="team-code">${game.homeTeam}</span>
-                            <span class="score">${game.homeScore}</span>
-                        </div>
-                    </div>
-                    <div style="text-align: center; font-size: 0.8em; color: #888;">
-                        Click for Box Score ↗
-                    </div>
-                `;
-
-                app.appendChild(card);
-            });
+        // [Logic 3] Popup Implementation (Solution to Iframe blocking)
+        // Iframe 차단을 우회하기 위해 window.open 사용
+        function openPopup(url) {
+            const width = 1280;
+            const height = 900;
+            // 듀얼 모니터 등을 고려한 중앙 정렬 계산
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            
+            window.open(url, 'nbaBoxScore', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
         }
 
-        // 실행
-        document.addEventListener('DOMContentLoaded', renderDashboard);
+        // [Logic 4] Rendering
+        const container = document.getElementById('game-container');
+        
+        games.forEach(game => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // 클릭 이벤트 바인딩
+            card.onclick = () => openPopup(generateUrl(game));
+
+            card.innerHTML = `
+                <div class="header">
+                    <span>${game.status}</span>
+                    <span>ID: ${game.id}</span>
+                </div>
+                <div class="scores">
+                    <div class="team">
+                        <div>${game.away}</div>
+                        <div style="color:${game.a_score > game.h_score ? '#1d428a' : '#333'}">${game.a_score}</div>
+                    </div>
+                    <span class="vs">@</span>
+                    <div class="team">
+                        <div>${game.home}</div>
+                        <div style="color:${game.h_score > game.a_score ? '#1d428a' : '#333'}">${game.h_score}</div>
+                    </div>
+                </div>
+                <div class="note">Click for Details (Popup) ↗</div>
+            `;
+            container.appendChild(card);
+        });
     </script>
 </body>
 </html>
