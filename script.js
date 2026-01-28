@@ -1,80 +1,190 @@
-// 1. 더미 데이터 (Dummy Data)
-const gamesData = [
-    {
-        gameId: "0022500659",
-        homeTeam: "ATL", awayTeam: "IND",
-        homeScore: 110, awayScore: 112,
-        status: "Final"
-    },
-    {
-        gameId: "0022500660",
-        homeTeam: "BOS", awayTeam: "MIA",
-        homeScore: 98, awayScore: 95,
-        status: "Final"
-    },
-    {
-        gameId: "0022500661",
-        homeTeam: "LAL", awayTeam: "GSW",
-        homeScore: 120, awayScore: 125,
-        status: "OT"
-    }
-];
-
-// 2. 날짜 표시
 document.addEventListener('DOMContentLoaded', () => {
-    const dateEl = document.getElementById('dateDisplay');
-    if (dateEl) {
-        dateEl.textContent = new Date().toLocaleDateString('en-US', { 
-            weekday: 'short', month: 'long', day: 'numeric' 
-        });
+    const heroGrid = document.getElementById('heroGrid');
+    const matchGrid = document.getElementById('matchGrid');
+    const dateDisplay = document.getElementById('dateDisplay');
+    
+    const prevBtn = document.querySelector('.date-nav-btn.prev');
+    const nextBtn = document.querySelector('.date-nav-btn.next');
+
+    // 현재 선택된 날짜
+    let currentDate = new Date();
+
+    // [Helper] 날짜 포맷 (YYYY-MM-DD)
+    function formatDateStr(date) {
+        if (!date || isNaN(date.getTime())) date = new Date();
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
     }
 
-    renderGameList();
-    renderHeroList(); // Hero 섹션용 (비어있음)
-});
+    // [Helper] 문자열 -> Date 객체
+    function parseDate(str) {
+        if (!str) return new Date();
+        const parts = str.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
 
-// 3. 경기 리스트 렌더링
-function renderGameList() {
-    const grid = document.getElementById('matchGrid');
-    if (!grid) return;
+    // [Core] 데이터 로드 함수 (자동 되감기 제거 버전)
+    async function loadDashboardData(dateStr) {
+        try {
+            // UI 초기화: 날짜는 즉시 변경하여 반응성 향상
+            dateDisplay.textContent = dateStr;
+            currentDate = parseDate(dateStr); // 상태 동기화
+            
+            heroGrid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:40px;">데이터 불러오는 중...</div>';
+            matchGrid.innerHTML = '';
 
-    grid.innerHTML = '';
+            // 파일 요청
+            const response = await fetch(`data/${dateStr}.json`);
+            
+            if (!response.ok) {
+                throw new Error("Data not found");
+            }
+            
+            const games = await response.json();
+            renderUI(games);
 
-    gamesData.forEach(game => {
-        const card = document.createElement('div');
-        card.className = 'game-card';
+        } catch (error) {
+            // [수정됨] 데이터가 없으면 강제로 돌아가지 않고, '없음'을 표시함
+            // 그래야 사용자가 "아, 24일은 경기가 없구나"라고 인지하고 다음 날짜로 넘어갈 수 있음
+            console.log(`No data for ${dateStr}`);
+            
+            heroGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #718096; background: white; border-radius: 12px; border: 1px dashed #cbd5e0;">
+                <div style="font-size: 2rem; margin-bottom: 10px;">📅</div>
+                <h3>경기 데이터가 없습니다</h3>
+                <p>${dateStr}에는 저장된 경기가 없습니다.</p>
+            </div>`;
+            matchGrid.innerHTML = '';
+        }
+    }
 
-        card.innerHTML = `
-            <div class="match-info">
-                <span class="status">${game.status}</span>
-                <span class="time">Today</span>
-            </div>
-            <div class="teams-container">
-                <div class="team">
-                    <span class="name">${game.awayTeam}</span>
-                    <span class="score">${game.awayScore}</span>
+    // [UI] 렌더링 로직 (유지)
+    function renderUI(games) {
+        if (!games || games.length === 0) {
+            matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
+            return;
+        }
+
+        matchGrid.innerHTML = games.map(g => {
+            const tags = generateNarrative(g);
+            const home = g.summary.homeTeam;
+            const away = g.summary.awayTeam;
+            const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
+            const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
+            const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
+            const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
+
+            return `
+                <div class="match-card">
+                    <div class="match-header">
+                        <span style="font-weight:600; font-size: 0.8rem;">${g.summary.gameStatusText}</span>
+                        <div style="display:flex; gap:5px;">${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
+                    </div>
+                    <div class="match-content-grid">
+                        <div class="team-block">
+                            <img src="${awayLogo}" class="team-logo" alt="${away.teamTricode}">
+                            <div class="team-info">
+                                <span class="team-code">${away.teamTricode}</span>
+                                <span class="team-record">${awayRec}</span>
+                            </div>
+                            <span class="score">${away.score}</span>
+                        </div>
+                        <div class="vs-divider"><span>vs</span></div>
+                        <div class="team-block">
+                            <span class="score">${home.score}</span>
+                            <div class="team-info" style="align-items: flex-end;">
+                                <span class="team-code">${home.teamTricode}</span>
+                                <span class="team-record">${homeRec}</span>
+                            </div>
+                            <img src="${homeLogo}" class="team-logo" alt="${home.teamTricode}">
+                        </div>
+                    </div>
                 </div>
-                <div class="vs-divider">@</div>
-                <div class="team">
-                    <span class="name">${game.homeTeam}</span>
-                    <span class="score">${game.homeScore}</span>
+            `;
+        }).join('');
+
+        const allPlayers = games.flatMap(g => 
+            (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
+        ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
+
+        const topHeroes = allPlayers.sort((a, b) => b.statistics.points - a.statistics.points).slice(0, 3);
+
+        heroGrid.innerHTML = topHeroes.map(h => {
+            const highlightTag = getPlayerHighlight(h);
+            const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${h.personId}.png`;
+            return `
+                <div class="player-card clutch-card">
+                    <div class="clutch-badge">${highlightTag || 'MVP'}</div>
+                    <div class="player-img-wrapper">
+                        <img src="${imgUrl}" alt="${h.familyName}" onerror="this.style.display='none'">
+                    </div>
+                    <div class="player-info">
+                        <h3>${h.familyName} <small>${h.firstName}</small></h3>
+                        <div class="player-stats">
+                            <span>${h.statistics.points} PTS</span> • 
+                            <span>${h.statistics.reboundsTotal} REB</span> • 
+                            <span>${h.statistics.assists} AST</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }).join('');
+    }
 
-        // (옵션) 기존 모달 열기 로직 자리
-        card.addEventListener('click', () => {
-            console.log(`Clicked game: ${game.gameId}`);
-            // 여기에 나중에 기능을 연결합니다.
-        });
+    function generateNarrative(game) {
+        const tags = [];
+        const summary = game.summary;
+        if (summary.gameStatus === 3) {
+            const margin = Math.abs(summary.homeTeam.score - summary.awayTeam.score);
+            if (margin <= 5) tags.push("#심장쫄깃_접전");
+            else if (margin >= 20) tags.push("#일방적_완승");
+        }
+        return tags;
+    }
 
-        grid.appendChild(card);
+    function getPlayerHighlight(player) {
+        if (!player || !player.statistics) return "";
+        const s = player.statistics;
+        const pts = s.points;
+        const ast = s.assists;
+        const reb = s.reboundsTotal;
+        if (pts >= 30) return "#득점머신";
+        if (pts >= 20 && ast >= 10) return "#더블더블";
+        if (pts >= 20 && reb >= 10) return "#골밑지배자";
+        if (pts >= 20 && (s.threePointersMade / s.threePointersAttempted) >= 0.5) return "#고효율슈터";
+        return "";
+    }
+
+    // [Event] 버튼 핸들러
+    prevBtn.addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 1);
+        loadDashboardData(formatDateStr(currentDate));
     });
-}
 
-// 4. Hero 리스트 렌더링 (플레이스홀더)
-function renderHeroList() {
-    const grid = document.getElementById('heroGrid');
-    if(!grid) return;
-    grid.innerHTML = '<div style="color:#999; padding:10px;">No Hero data yet...</div>';
-}
+    nextBtn.addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 1);
+        loadDashboardData(formatDateStr(currentDate));
+    });
+
+    // [Init] 초기 실행: Latest 파일 확인
+    async function init() {
+        try {
+            const res = await fetch('data/latest.json');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.date) {
+                    console.log(`Latest data found: ${data.date}`);
+                    loadDashboardData(data.date);
+                    return; // 성공 시 종료
+                }
+            }
+        } catch (e) {
+            console.warn("Latest file not found, defaulting to today.");
+        }
+        // 실패 시 오늘 날짜로 시도
+        loadDashboardData(formatDateStr(new Date()));
+    }
+
+    init();
+});
