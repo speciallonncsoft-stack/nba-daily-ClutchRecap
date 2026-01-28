@@ -1,90 +1,211 @@
 <!DOCTYPE html>
-<html lang="ko">
+
+<html lang="en">
+
+
+
 <head>
+
     <meta charset="UTF-8">
-    <title>NBA Dashboard (Popup Logic Applied)</title>
-    <style>
-        /* UI 디자인: 가독성을 위한 카드 레이아웃 */
-        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card { 
-            background: white; padding: 20px; border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; 
-            transition: transform 0.2s;
-        }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.15); }
-        .header { display: flex; justify-content: space-between; color: #666; font-size: 0.9em; margin-bottom: 10px; }
-        .scores { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.2em; }
-        .team { text-align: center; }
-        .vs { color: #999; font-size: 0.8em; }
-        .note { margin-top: 10px; font-size: 0.8em; color: #1d428a; text-align: center; }
-    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NBA Daily Clutch | MVP Dashboard</title>
+
+
+
+    <link rel="stylesheet" as="style" crossorigin
+
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+
+
+    <link rel="stylesheet" href="style.css">
+
 </head>
+
+
+
 <body>
 
-    <h2>🏀 NBA Daily Results</h2>
-    <div id="game-container" class="grid"></div>
+    
 
-    <script>
-        // [Logic 1] Data Structure (Confirmed)
-        // 백엔드 없이 프론트엔드 테스트를 위한 JSON 더미 데이터
-        const games = [
-            { id: "0022500659", home: "ATL", away: "IND", h_score: 132, a_score: 116, status: "Final" },
-            { id: "0022500660", home: "BOS", away: "POR", h_score: 102, a_score: 94, status: "Final" },
-            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" }
-        ];
+    <div class="app-container">
 
-        // [Logic 2] URL Generation Rule (Inference based on constraints)
-        // 요구사항: https://www.nba.com/game/{away}-{home}-{id}/box-score
-        // 상세: 팀 약어는 소문자로 변환해야 실제 URL과 매핑됨.
-        function generateUrl(game) {
-            const away = game.away.toLowerCase();
-            const home = game.home.toLowerCase();
-            return `https://www.nba.com/game/${away}-${home}-${game.id}/box-score`;
-        }
+        <aside class="sidebar">
 
-        // [Logic 3] Popup Implementation (Solution to Iframe blocking)
-        // Iframe 차단을 우회하기 위해 window.open 사용
-        function openPopup(url) {
-            const width = 1280;
-            const height = 900;
-            // 듀얼 모니터 등을 고려한 중앙 정렬 계산
-            const left = (window.screen.width - width) / 2;
-            const top = (window.screen.height - height) / 2;
-            
-            window.open(url, 'nbaBoxScore', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,resizable=yes`);
-        }
+            <div class="sidebar-header">
 
-        // [Logic 4] Rendering
-        const container = document.getElementById('game-container');
-        
-        games.forEach(game => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            // 클릭 이벤트 바인딩
-            card.onclick = () => openPopup(generateUrl(game));
+                <h2>NBA<br>Daily Clutch</h2>
 
-            card.innerHTML = `
-                <div class="header">
-                    <span>${game.status}</span>
-                    <span>ID: ${game.id}</span>
+            </div>
+
+
+
+            <nav class="sidebar-nav">
+
+                <a href="#" class="nav-item active" data-page="home">
+
+                    <span class="icon">🏠</span>
+
+                    <span class="label">Home</span>
+
+                </a>
+
+                <a href="#" class="nav-item" data-page="schedule">
+
+                    <span class="icon">📅</span>
+
+                    <span class="label">Schedule</span>
+
+                </a>
+
+                <a href="#" class="nav-item" data-page="standings">
+
+                    <span class="icon">🏆</span>
+
+                    <span class="label">Standings</span>
+
+                </a>
+
+            </nav>
+
+        </aside>
+
+
+
+        <main class="main-content">
+
+            <header class="top-header">
+
+                <div class="header-left">
+
+                    <button id="mobileMenuBtn" class="mobile-menu-btn">
+
+                        <span>☰</span>
+
+                    </button>
+
                 </div>
-                <div class="scores">
-                    <div class="team">
-                        <div>${game.away}</div>
-                        <div style="color:${game.a_score > game.h_score ? '#1d428a' : '#333'}">${game.a_score}</div>
+
+
+
+                <div class="header-center">
+
+                    <div class="date-picker-container">
+
+                        <button class="date-nav-btn prev">‹</button>
+
+                        <span id="dateDisplay" class="date-display">Loading...</span>
+
+                        <button class="date-nav-btn next">›</button>
+
                     </div>
-                    <span class="vs">@</span>
-                    <div class="team">
-                        <div>${game.home}</div>
-                        <div style="color:${game.h_score > game.a_score ? '#1d428a' : '#333'}">${game.h_score}</div>
-                    </div>
+
                 </div>
-                <div class="note">Click for Details (Popup) ↗</div>
-            `;
-            container.appendChild(card);
-        });
-    </script>
+
+
+
+                <div class="header-right">
+
+                    <div class="ticker-container">
+
+                        <div id="tickerWrapper" class="ticker-wrapper">
+
+                            </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+
+            <div id="contentArea" class="content-scroll-area">
+
+                <section class="hero-section">
+
+                    <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
+
+                    <div id="heroGrid" class="hero-grid">
+
+                        </div>
+
+                </section>
+
+
+
+                <section class="match-section">
+
+                    <h2 class="section-title">Game Results</h2>
+
+                    <div id="matchGrid" class="match-grid">
+
+                        </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+
+    <div id="gameModal" class="modal-overlay">
+
+        <div class="modal-container">
+
+            <div class="modal-header">
+
+                <h3 id="modalTitle">Game Details</h3>
+
+                <button class="modal-close">&times;</button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="modal-score-summary">
+
+                    <div class="modal-team">
+
+                        <div class="team-logo large" id="modalHomeLogo">H</div>
+
+                        <span id="modalHomeName">HOME</span>
+
+                        <span class="modal-score" id="modalHomeScore">0</span>
+
+                    </div>
+
+                    <div class="modal-vs">FINAL</div>
+
+                    <div class="modal-team">
+
+                        <div class="team-logo large" id="modalAwayLogo">A</div>
+
+                        <span id="modalAwayName">AWAY</span>
+
+                        <span class="modal-score" id="modalAwayScore">0</span>
+
+                    </div>
+
+                </div>
+
+                <div id="modalStatsContent">
+
+                    </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <script src="script.js"></script>
+
 </body>
-</html>
