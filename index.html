@@ -1,108 +1,202 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Daily Clutch | MVP Dashboard</title>
+    <title>NBA Game Dashboard (Prototype)</title>
+    <style>
+        :root {
+            --primary-bg: #f4f4f4;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --accent-color: #1d428a; /* NBA Blue */
+        }
 
-    <link rel="stylesheet" as="style" crossorigin
-        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
 
-    <link rel="stylesheet" href="style.css">
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+
+        .game-header {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .team-code {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .score {
+            font-size: 1.8em;
+            color: var(--accent-color);
+        }
+
+        .vs {
+            color: #999;
+            font-size: 0.8em;
+        }
+
+        .status-badge {
+            background-color: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            align-self: flex-start;
+        }
+
+        .status-badge.final {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+    </style>
 </head>
-
 <body>
-    
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>NBA<br>Daily Clutch</h2>
-            </div>
 
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="home">
-                    <span class="icon">🏠</span>
-                    <span class="label">Home</span>
-                </a>
-                <a href="#" class="nav-item" data-page="schedule">
-                    <span class="icon">📅</span>
-                    <span class="label">Schedule</span>
-                </a>
-                <a href="#" class="nav-item" data-page="standings">
-                    <span class="icon">🏆</span>
-                    <span class="label">Standings</span>
-                </a>
-            </nav>
-        </aside>
-
-        <main class="main-content">
-            <header class="top-header">
-                <div class="header-left">
-                    <button id="mobileMenuBtn" class="mobile-menu-btn">
-                        <span>☰</span>
-                    </button>
-                </div>
-
-                <div class="header-center">
-                    <div class="date-picker-container">
-                        <button class="date-nav-btn prev">‹</button>
-                        <span id="dateDisplay" class="date-display">Loading...</span>
-                        <button class="date-nav-btn next">›</button>
-                    </div>
-                </div>
-
-                <div class="header-right">
-                    <div class="ticker-container">
-                        <div id="tickerWrapper" class="ticker-wrapper">
-                            </div>
-                    </div>
-                </div>
-            </header>
-
-            <div id="contentArea" class="content-scroll-area">
-                <section class="hero-section">
-                    <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
-                    <div id="heroGrid" class="hero-grid">
-                        </div>
-                </section>
-
-                <section class="match-section">
-                    <h2 class="section-title">Game Results</h2>
-                    <div id="matchGrid" class="match-grid">
-                        </div>
-                </section>
-            </div>
-        </main>
-    </div>
-
-    <div id="gameModal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 id="modalTitle">Game Details</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-score-summary">
-                    <div class="modal-team">
-                        <div class="team-logo large" id="modalHomeLogo">H</div>
-                        <span id="modalHomeName">HOME</span>
-                        <span class="modal-score" id="modalHomeScore">0</span>
-                    </div>
-                    <div class="modal-vs">FINAL</div>
-                    <div class="modal-team">
-                        <div class="team-logo large" id="modalAwayLogo">A</div>
-                        <span id="modalAwayName">AWAY</span>
-                        <span class="modal-score" id="modalAwayScore">0</span>
-                    </div>
-                </div>
-                <div id="modalStatsContent">
-                    </div>
-            </div>
+    <h1>🏀 NBA Daily Clutch</h1>
+    <div id="app" class="dashboard-grid">
         </div>
-    </div>
 
-    <script src="script.js"></script>
+    <script>
+        // 1. Data Logic: JSON Dummy Data
+        const gamesData = [
+            {
+                gameId: "0022500659",
+                homeTeam: "ATL",
+                awayTeam: "IND",
+                homeScore: 132,
+                awayScore: 116,
+                status: "Final"
+            },
+            {
+                gameId: "0022500660",
+                homeTeam: "BOS",
+                awayTeam: "POR",
+                homeScore: 102,
+                awayScore: 94,
+                status: "Final"
+            },
+            {
+                gameId: "0022500661",
+                homeTeam: "LAL",
+                awayTeam: "CHI",
+                homeScore: 129,
+                awayScore: 118,
+                status: "Final"
+            }
+        ];
+
+        // 2. URL Generation Logic
+        function getBoxScoreUrl(game) {
+            // Rule: https://www.nba.com/game/{away}-{home}-{id}/box-score
+            // Note: 팀 약어는 소문자로 변환
+            const away = game.awayTeam.toLowerCase();
+            const home = game.homeTeam.toLowerCase();
+            const id = game.gameId;
+            
+            // 만약 NBA 사이트 구조 변경으로 링크가 작동하지 않으면 아래 포맷으로 변경 고려:
+            // return `https://www.nba.com/game/${away}-vs-${home}-${id}/box-score`;
+            
+            return `https://www.nba.com/game/${away}-${home}-${id}/box-score`;
+        }
+
+        // 3. Render Logic
+        function renderDashboard() {
+            const app = document.getElementById('app');
+            app.innerHTML = ''; // 초기화
+
+            gamesData.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                
+                // 클릭 이벤트: 팝업 오픈
+                card.onclick = () => {
+                    const url = getBoxScoreUrl(game);
+                    // 팝업 설정: 1280x900
+                    window.open(url, 'nbaBoxScore', 'width=1280,height=900,scrollbars=yes,resizable=yes');
+                };
+
+                const isFinal = game.status === 'Final';
+                const statusClass = isFinal ? 'status-badge final' : 'status-badge';
+
+                card.innerHTML = `
+                    <div class="game-header">
+                        <span class="${statusClass}">${game.status}</span>
+                        <span>ID: ${game.gameId}</span>
+                    </div>
+                    <div class="score-board">
+                        <div class="team">
+                            <span class="team-code">${game.awayTeam}</span>
+                            <span class="score">${game.awayScore}</span>
+                        </div>
+                        <span class="vs">@</span>
+                        <div class="team">
+                            <span class="team-code">${game.homeTeam}</span>
+                            <span class="score">${game.homeScore}</span>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.8em; color: #888;">
+                        Click for Box Score ↗
+                    </div>
+                `;
+
+                app.appendChild(card);
+            });
+        }
+
+        // 실행
+        document.addEventListener('DOMContentLoaded', renderDashboard);
+    </script>
 </body>
-
 </html>
