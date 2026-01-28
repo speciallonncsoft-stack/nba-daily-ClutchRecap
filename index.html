@@ -69,10 +69,37 @@
 
                 <section class="match-section">
                     <h2 class="section-title">Game Results</h2>
-                    <div id="matchGrid" class="match-grid"></div> 
+                    <div id="matchGrid" class="match-grid">
+                        </div>
                 </section>
             </div>
         </main>
+    </div>
+
+    <div id="gameModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Game Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-score-summary">
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalHomeLogo">H</div>
+                        <span id="modalHomeName">HOME</span>
+                        <span class="modal-score" id="modalHomeScore">0</span>
+                    </div>
+                    <div class="modal-vs">FINAL</div>
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalAwayLogo">A</div>
+                        <span id="modalAwayName">AWAY</span>
+                        <span class="modal-score" id="modalAwayScore">0</span>
+                    </div>
+                </div>
+                <div id="modalStatsContent">
+                    </div>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
