@@ -1,211 +1,205 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
-
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>NBA Daily Clutch | MVP Dashboard</title>
 
-
-
     <link rel="stylesheet" as="style" crossorigin
-
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
-
-
     <link rel="stylesheet" href="style.css">
-
+    
+    <style>
+        /* 동적 생성 요소를 위한 임시 스타일 */
+        .match-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer; /* 클릭 가능 표시 */
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .match-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #1d428a;
+        }
+        .match-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; }
+        .score-box { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; }
+        .team-col { display: flex; flex-direction: column; align-items: center; }
+        .vs-sign { font-size: 0.8rem; color: #999; }
+        .click-guide { font-size: 0.7rem; color: #1d428a; text-align: center; margin-top: 5px; }
+    </style>
 </head>
 
-
-
 <body>
-
     
-
     <div class="app-container">
-
         <aside class="sidebar">
-
             <div class="sidebar-header">
-
                 <h2>NBA<br>Daily Clutch</h2>
-
             </div>
-
-
 
             <nav class="sidebar-nav">
-
                 <a href="#" class="nav-item active" data-page="home">
-
                     <span class="icon">🏠</span>
-
                     <span class="label">Home</span>
-
                 </a>
-
                 <a href="#" class="nav-item" data-page="schedule">
-
                     <span class="icon">📅</span>
-
                     <span class="label">Schedule</span>
-
                 </a>
-
                 <a href="#" class="nav-item" data-page="standings">
-
                     <span class="icon">🏆</span>
-
                     <span class="label">Standings</span>
-
                 </a>
-
             </nav>
-
         </aside>
 
-
-
         <main class="main-content">
-
             <header class="top-header">
-
                 <div class="header-left">
-
                     <button id="mobileMenuBtn" class="mobile-menu-btn">
-
                         <span>☰</span>
-
                     </button>
-
                 </div>
-
-
 
                 <div class="header-center">
-
                     <div class="date-picker-container">
-
                         <button class="date-nav-btn prev">‹</button>
-
                         <span id="dateDisplay" class="date-display">Loading...</span>
-
                         <button class="date-nav-btn next">›</button>
-
                     </div>
-
                 </div>
-
-
 
                 <div class="header-right">
-
                     <div class="ticker-container">
-
                         <div id="tickerWrapper" class="ticker-wrapper">
-
                             </div>
-
                     </div>
-
                 </div>
-
             </header>
 
-
-
             <div id="contentArea" class="content-scroll-area">
-
                 <section class="hero-section">
-
                     <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
-
                     <div id="heroGrid" class="hero-grid">
-
-                        </div>
-
+                        <div style="padding:20px; color:#999;">(Hero Section)</div>
+                    </div>
                 </section>
-
-
 
                 <section class="match-section">
-
                     <h2 class="section-title">Game Results</h2>
-
-                    <div id="matchGrid" class="match-grid">
-
-                        </div>
-
+                    <div id="matchGrid" class="match-grid"></div>
                 </section>
-
             </div>
-
         </main>
-
     </div>
-
-
 
     <div id="gameModal" class="modal-overlay">
-
         <div class="modal-container">
-
             <div class="modal-header">
-
                 <h3 id="modalTitle">Game Details</h3>
-
                 <button class="modal-close">&times;</button>
-
             </div>
-
             <div class="modal-body">
-
                 <div class="modal-score-summary">
-
                     <div class="modal-team">
-
                         <div class="team-logo large" id="modalHomeLogo">H</div>
-
                         <span id="modalHomeName">HOME</span>
-
                         <span class="modal-score" id="modalHomeScore">0</span>
-
                     </div>
-
                     <div class="modal-vs">FINAL</div>
-
                     <div class="modal-team">
-
                         <div class="team-logo large" id="modalAwayLogo">A</div>
-
                         <span id="modalAwayName">AWAY</span>
-
                         <span class="modal-score" id="modalAwayScore">0</span>
-
                     </div>
-
                 </div>
-
                 <div id="modalStatsContent">
-
                     </div>
-
             </div>
-
         </div>
-
     </div>
 
+    <script>
+        // 1. 경기 데이터 (Dummy Data)
+        const gamesData = [
+            { id: "0022500659", home: "ATL", away: "IND", h_score: 132, a_score: 116, status: "Final" },
+            { id: "0022500660", home: "BOS", away: "POR", h_score: 102, a_score: 94, status: "Final" },
+            { id: "0022500661", home: "LAL", away: "CHI", h_score: 129, a_score: 118, status: "Final" },
+            { id: "0022500662", home: "GSW", away: "PHI", h_score: 119, a_score: 107, status: "Final" }
+        ];
 
+        // 2. URL 생성 로직 (NBA.com 패턴 적용)
+        function getNbaUrl(game) {
+            // 패턴: https://www.nba.com/game/{away}-vs-{home}-{id}/box-score#box-score
+            // 팀 약어는 소문자로 변환해야 함 (예: IND -> ind)
+            const away = game.away.toLowerCase();
+            const home = game.home.toLowerCase();
+            
+            return `https://www.nba.com/game/${away}-vs-${home}-${game.id}/box-score#box-score`;
+        }
 
-    <script src="script.js"></script>
+        // 3. 렌더링 및 클릭 이벤트 연결
+        function renderMatches() {
+            const grid = document.getElementById('matchGrid');
+            if (!grid) return;
 
+            grid.innerHTML = ''; // 초기화
+
+            gamesData.forEach(game => {
+                // 카드 요소 생성
+                const card = document.createElement('div');
+                card.className = 'match-card'; // CSS 클래스
+
+                // [핵심] 클릭 시 새 창으로 URL 오픈
+                card.onclick = () => {
+                    const targetUrl = getNbaUrl(game);
+                    window.open(targetUrl, '_blank'); // 새 탭/창 열기
+                };
+
+                // 내부 HTML 구성 (점수판)
+                const isHomeWin = game.h_score > game.a_score;
+                const isAwayWin = game.a_score > game.h_score;
+                
+                card.innerHTML = `
+                    <div class="match-header">
+                        <span style="font-weight:bold;">${game.status}</span>
+                        <span>#${game.id}</span>
+                    </div>
+                    <div class="score-box">
+                        <div class="team-col">
+                            <span>${game.away}</span>
+                            <span style="color:${isAwayWin ? '#1d428a' : '#333'}">${game.a_score}</span>
+                        </div>
+                        <span class="vs-sign">@</span>
+                        <div class="team-col">
+                            <span>${game.home}</span>
+                            <span style="color:${isHomeWin ? '#1d428a' : '#333'}">${game.h_score}</span>
+                        </div>
+                    </div>
+                    <div class="click-guide">Click for Box Score ↗</div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMatches();
+            
+            // 날짜 표시 (오늘 날짜)
+            const today = new Date().toISOString().split('T')[0];
+            const dateEl = document.getElementById('dateDisplay');
+            if(dateEl) dateEl.innerText = today;
+        });
+    </script>
 </body>
+</html>
