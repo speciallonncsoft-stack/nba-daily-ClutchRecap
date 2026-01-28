@@ -1,146 +1,107 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Game Dashboard</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .game-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .game-card {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer; /* 클릭 가능 표시 */
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .game-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            background-color: #fafafa;
-        }
-        .team-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .score {
-            font-size: 1.5rem;
-            color: #000;
-        }
-        .status {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .vs {
-            color: #888;
-            margin: 0 15px;
-            font-size: 0.9rem;
-        }
-    </style>
-</head>
-<body>
+    <title>NBA Daily Clutch | MVP Dashboard</title>
 
-    <div class="container">
-        <h1>NBA Game Results</h1>
-        <div id="game-list" class="game-list">
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>NBA<br>Daily Clutch</h2>
             </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="home">
+                    <span class="icon">🏠</span>
+                    <span class="label">Home</span>
+                </a>
+                <a href="#" class="nav-item" data-page="schedule">
+                    <span class="icon">📅</span>
+                    <span class="label">Schedule</span>
+                </a>
+                <a href="#" class="nav-item" data-page="standings">
+                    <span class="icon">🏆</span>
+                    <span class="label">Standings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn">
+                        <span>☰</span>
+                    </button>
+                </div>
+
+                <div class="header-center">
+                    <div class="date-picker-container">
+                        <button class="date-nav-btn prev">‹</button>
+                        <span id="dateDisplay" class="date-display">Loading...</span>
+                        <button class="date-nav-btn next">›</button>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="ticker-container">
+                        <div id="tickerWrapper" class="ticker-wrapper">
+                            </div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="contentArea" class="content-scroll-area">
+                <section class="hero-section">
+                    <h2 class="section-title">Today's <span style="color: var(--accent-color); margin-left: 6px;">Clutch</span> Heroes</h2>
+                    <div id="heroGrid" class="hero-grid">
+                        </div>
+                </section>
+
+                <section class="match-section">
+                    <h2 class="section-title">Game Results</h2>
+                    <div id="matchGrid" class="match-grid">
+                        </div>
+                </section>
+            </div>
+        </main>
     </div>
 
-    <script>
-        // 1. 더미 데이터 (JSON 형태 시뮬레이션)
-        const games = [
-            {
-                gameId: "0022500659",
-                homeTeam: "ATL",
-                awayTeam: "IND",
-                homeScore: 111,
-                awayScore: 113,
-                status: "Final"
-            },
-            {
-                gameId: "0022500660",
-                homeTeam: "BOS",
-                awayTeam: "MIA",
-                homeScore: 98,
-                awayScore: 95,
-                status: "Final"
-            },
-            {
-                gameId: "0022500661",
-                homeTeam: "LAL",
-                awayTeam: "GSW",
-                homeScore: 120,
-                awayScore: 125,
-                status: "Final"
-            }
-        ];
-
-        // 2. 팝업 열기 함수 (이전 대화에서 합의된 로직)
-        function openNbaBoxScore(gameId, homeTeam, awayTeam) {
-            // URL 패턴: https://www.nba.com/game/{away}-{home}-{id}/box-score
-            const home = homeTeam.toLowerCase();
-            const away = awayTeam.toLowerCase();
-            const url = `https://www.nba.com/game/${away}-vs-${home}-${gameId}/box-score`;
-
-            // 팝업 설정
-            const windowName = `nba_boxscore_${gameId}`;
-            const features = 'width=1280,height=900,resizable=yes,scrollbars=yes';
-
-            window.open(url, windowName, features);
-        }
-
-        // 3. 리스트 렌더링 로직
-        const listContainer = document.getElementById('game-list');
-
-        games.forEach(game => {
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            
-            // 카드 내부 HTML 구성
-            card.innerHTML = `
-                <div class="team-info">
-                    <span>${game.awayTeam}</span>
-                    <span class="score">${game.awayScore}</span>
+    <div id="gameModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Game Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-score-summary">
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalHomeLogo">H</div>
+                        <span id="modalHomeName">HOME</span>
+                        <span class="modal-score" id="modalHomeScore">0</span>
+                    </div>
+                    <div class="modal-vs">FINAL</div>
+                    <div class="modal-team">
+                        <div class="team-logo large" id="modalAwayLogo">A</div>
+                        <span id="modalAwayName">AWAY</span>
+                        <span class="modal-score" id="modalAwayScore">0</span>
+                    </div>
                 </div>
-                <div class="vs">@</div>
-                <div class="team-info">
-                    <span class="score">${game.homeScore}</span>
-                    <span>${game.homeTeam}</span>
-                </div>
-                <div class="status">${game.status}</div>
-            `;
+                <div id="modalStatsContent">
+                    </div>
+            </div>
+        </div>
+    </div>
 
-            // 클릭 이벤트 리스너 추가
-            card.addEventListener('click', () => {
-                openNbaBoxScore(game.gameId, game.homeTeam, game.awayTeam);
-            });
-
-            listContainer.appendChild(card);
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
-</html>
+
