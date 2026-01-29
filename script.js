@@ -75,67 +75,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // [UI] 렌더링 로직 (수정됨: 클릭 이벤트 추가를 위해 DOM 생성 방식으로 변경)
+// [UI] 렌더링 로직 (디버깅 로그 추가 버전)
     function renderUI(games) {
-        // 1. 경기 리스트 렌더링
         matchGrid.innerHTML = ''; // 초기화
 
         if (!games || games.length === 0) {
             matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
-        } else {
-            games.forEach(g => {
-                // 데이터 추출
-                const tags = generateNarrative(g);
-                const home = g.summary.homeTeam;
-                const away = g.summary.awayTeam;
-                const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
-                const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
-                const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
-                const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
+            return;
+        } 
+        
+        games.forEach(g => {
+            // [Debug] 데이터 구조 확인용 로그 (첫 번째 경기만 출력)
+            if (games.indexOf(g) === 0) console.log("첫 번째 경기 데이터 확인:", g);
 
-                // 요소 생성 (클릭 이벤트를 달기 위해 createElement 사용)
-                const card = document.createElement('div');
-                card.className = 'match-card';
-                // 커서 스타일 추가 (클릭 가능함을 시각적으로 표시)
-                card.style.cursor = 'pointer'; 
+            // 데이터 추출 (ID 위치 찾기 강화)
+            // g.gameId가 없으면 g.id나 g.summary.gameId를 찾아보도록 수정
+            const gameId = g.gameId || g.id || (g.summary ? g.summary.gameId : null);
 
-                // 내부 HTML 구성 (기존 템플릿 유지)
-                card.innerHTML = `
-                    <div class="match-header">
-                        <span style="font-weight:600; font-size: 0.8rem;">${g.summary.gameStatusText}</span>
-                        <div style="display:flex; gap:5px;">${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
-                    </div>
-                    <div class="match-content-grid">
-                        <div class="team-block">
-                            <img src="${awayLogo}" class="team-logo" alt="${away.teamTricode}">
-                            <div class="team-info">
-                                <span class="team-code">${away.teamTricode}</span>
-                                <span class="team-record">${awayRec}</span>
-                            </div>
-                            <span class="score">${away.score}</span>
+            const tags = generateNarrative(g);
+            const home = g.summary.homeTeam;
+            const away = g.summary.awayTeam;
+            
+            // 로고 및 승패 기록
+            const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
+            const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
+            const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
+            const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
+
+            // 요소 생성
+            const card = document.createElement('div');
+            card.className = 'match-card';
+            card.style.cursor = 'pointer'; 
+
+            card.innerHTML = `
+                <div class="match-header">
+                    <span style="font-weight:600; font-size: 0.8rem;">${g.summary.gameStatusText}</span>
+                    <div style="display:flex; gap:5px;">${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
+                </div>
+                <div class="match-content-grid">
+                    <div class="team-block">
+                        <img src="${awayLogo}" class="team-logo" alt="${away.teamTricode}">
+                        <div class="team-info">
+                            <span class="team-code">${away.teamTricode}</span>
+                            <span class="team-record">${awayRec}</span>
                         </div>
-                        <div class="vs-divider"><span>vs</span></div>
-                        <div class="team-block">
-                            <span class="score">${home.score}</span>
-                            <div class="team-info" style="align-items: flex-end;">
-                                <span class="team-code">${home.teamTricode}</span>
-                                <span class="team-record">${homeRec}</span>
-                            </div>
-                            <img src="${homeLogo}" class="team-logo" alt="${home.teamTricode}">
-                        </div>
+                        <span class="score">${away.score}</span>
                     </div>
-                `;
+                    <div class="vs-divider"><span>vs</span></div>
+                    <div class="team-block">
+                        <span class="score">${home.score}</span>
+                        <div class="team-info" style="align-items: flex-end;">
+                            <span class="team-code">${home.teamTricode}</span>
+                            <span class="team-record">${homeRec}</span>
+                        </div>
+                        <img src="${homeLogo}" class="team-logo" alt="${home.teamTricode}">
+                    </div>
+                </div>
+            `;
 
-                // [핵심] 클릭 이벤트 리스너 연결
-                card.addEventListener('click', () => {
-                    openNbaBoxScore(g.gameId, home.teamTricode, away.teamTricode);
-                });
-
-                matchGrid.appendChild(card);
+            // [Event] 클릭 이벤트 리스너
+            card.addEventListener('click', () => {
+                console.log("카드 클릭됨! Game ID:", gameId); // 클릭 확인 로그
+                
+                if (!gameId) {
+                    alert("Game ID를 찾을 수 없습니다. 콘솔(F12)을 확인하세요.");
+                    console.error("Game ID Missing. 전체 데이터:", g);
+                    return;
+                }
+                
+                openNbaBoxScore(gameId, home.teamTricode, away.teamTricode);
             });
-        }
 
-        // 2. Hero 리스트 렌더링 (기존 로직 유지)
+            matchGrid.appendChild(card);
+        });
+        
+        // Hero 섹션 로직 (기존 유지)
+        renderHeroes(games);
+    }
+    
+    // [Helper] Hero 섹션 분리 (가독성을 위해)
+    function renderHeroes(games) {
+        const heroGrid = document.getElementById('heroGrid');
         const allPlayers = games.flatMap(g => 
             (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
         ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
