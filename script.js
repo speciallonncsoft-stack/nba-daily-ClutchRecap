@@ -25,7 +25,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 
-    // [Core] 데이터 로드 함수 (자동 되감기 제거 버전)
+    // [New Feature] NBA 박스스코어 팝업 열기 함수
+    function openNbaBoxScore(gameId, homeTeam, awayTeam) {
+        if (!gameId || !homeTeam || !awayTeam) return;
+        
+        const h = homeTeam.toLowerCase();
+        const a = awayTeam.toLowerCase();
+        // NBA.com URL 패턴
+        const url = `https://www.nba.com/game/${a}-vs-${h}-${gameId}/box-score`;
+
+        // 팝업 중앙 정렬 옵션
+        const w = 1200;
+        const hg = 900;
+        const left = (window.screen.width - w) / 2;
+        const top = (window.screen.height - hg) / 2;
+
+        window.open(url, `nba_popup_${gameId}`, `width=${w},height=${hg},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+    }
+
+    // [Core] 데이터 로드 함수
     async function loadDashboardData(dateStr) {
         try {
             // UI 초기화: 날짜는 즉시 변경하여 반응성 향상
@@ -46,8 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderUI(games);
 
         } catch (error) {
-            // [수정됨] 데이터가 없으면 강제로 돌아가지 않고, '없음'을 표시함
-            // 그래야 사용자가 "아, 24일은 경기가 없구나"라고 인지하고 다음 날짜로 넘어갈 수 있음
             console.log(`No data for ${dateStr}`);
             
             heroGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: #718096; background: white; border-radius: 12px; border: 1px dashed #cbd5e0;">
@@ -59,24 +75,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // [UI] 렌더링 로직 (유지)
+    // [UI] 렌더링 로직 (수정됨: 클릭 이벤트 추가를 위해 DOM 생성 방식으로 변경)
     function renderUI(games) {
+        // 1. 경기 리스트 렌더링
+        matchGrid.innerHTML = ''; // 초기화
+
         if (!games || games.length === 0) {
             matchGrid.innerHTML = '<div style="padding:20px;">경기 정보가 없습니다.</div>';
-            return;
-        }
+        } else {
+            games.forEach(g => {
+                // 데이터 추출
+                const tags = generateNarrative(g);
+                const home = g.summary.homeTeam;
+                const away = g.summary.awayTeam;
+                const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
+                const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
+                const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
+                const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
 
-        matchGrid.innerHTML = games.map(g => {
-            const tags = generateNarrative(g);
-            const home = g.summary.homeTeam;
-            const away = g.summary.awayTeam;
-            const homeLogo = `https://cdn.nba.com/logos/nba/${home.teamId}/global/L/logo.svg`;
-            const awayLogo = `https://cdn.nba.com/logos/nba/${away.teamId}/global/L/logo.svg`;
-            const homeRec = home.wins !== undefined ? `${home.wins}승 ${home.losses}패` : '';
-            const awayRec = away.wins !== undefined ? `${away.wins}승 ${away.losses}패` : '';
+                // 요소 생성 (클릭 이벤트를 달기 위해 createElement 사용)
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                // 커서 스타일 추가 (클릭 가능함을 시각적으로 표시)
+                card.style.cursor = 'pointer'; 
 
-            return `
-                <div class="match-card">
+                // 내부 HTML 구성 (기존 템플릿 유지)
+                card.innerHTML = `
                     <div class="match-header">
                         <span style="font-weight:600; font-size: 0.8rem;">${g.summary.gameStatusText}</span>
                         <div style="display:flex; gap:5px;">${tags.map(t => `<span class="tag-sm">${t}</span>`).join('')}</div>
@@ -100,10 +124,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             <img src="${homeLogo}" class="team-logo" alt="${home.teamTricode}">
                         </div>
                     </div>
-                </div>
-            `;
-        }).join('');
+                `;
 
+                // [핵심] 클릭 이벤트 리스너 연결
+                card.addEventListener('click', () => {
+                    openNbaBoxScore(g.gameId, home.teamTricode, away.teamTricode);
+                });
+
+                matchGrid.appendChild(card);
+            });
+        }
+
+        // 2. Hero 리스트 렌더링 (기존 로직 유지)
         const allPlayers = games.flatMap(g => 
             (g.boxscore?.homeTeam?.players || []).concat(g.boxscore?.awayTeam?.players || [])
         ).filter(p => p && p.statistics && p.statistics.minutesPlayed !== "PT00M00.00S");
