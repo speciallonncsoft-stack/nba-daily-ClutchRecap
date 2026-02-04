@@ -2,8 +2,13 @@ name: NBA Daily Update
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # KST 오후 2시 자동 실행
-  workflow_dispatch:      # 수동 실행 버튼 생성
+    # 1. 오전 8:00 KST (UTC 23:00)
+    - cron: '0 23 * * *'
+    # 2. 오후 2:00 KST (UTC 05:00)
+    - cron: '0 5 * * *'
+    # 3. 밤 9:20 KST (UTC 12:20)
+    - cron: '20 12 * * *'
+  workflow_dispatch:      # 수동 실행 버튼
 
 jobs:
   build:
@@ -34,3 +39,10 @@ jobs:
           git diff --quiet && git diff --staged --quiet || git commit -m "Update NBA Data"
           git pull --rebase origin main
           git push origin main
+
+      - name: Send Slack Notification
+        if: success()  # 위 단계들이 모두 성공했을 때만 실행
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"🏀 *NBA 데이터 업데이트 완료!* \n\n✅ 1일 3회 자동 업데이트가 수행되었습니다.\n📅 날짜: $(date +'%Y-%m-%d')\n🔗 대시보드 확인: https://nba-daily-clutch-recap.vercel.app\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
