@@ -106208,7 +106208,7 @@
       "gameId": "0022500746",
       "gameCode": "20260206/LACSAC",
       "gameStatus": 3,
-      "gameStatusText": "Final               ",
+      "gameStatusText": "Final",
       "period": 4,
       "gameClock": "",
       "gameTimeUTC": "2026-02-07T03:00:00Z",
@@ -106513,7 +106513,7 @@
             "oncourt": "1",
             "played": "1",
             "statistics": {
-              "assists": 1,
+              "assists": 2,
               "blocks": 0,
               "blocksReceived": 0,
               "fieldGoalsAttempted": 8,
@@ -106870,7 +106870,7 @@
               "plus": 55,
               "plusMinusPoints": -7,
               "points": 14,
-              "pointsFastBreak": 4,
+              "pointsFastBreak": 6,
               "pointsInThePaint": 12,
               "pointsSecondChance": 2,
               "reboundsDefensive": 4,
@@ -107185,8 +107185,8 @@
           }
         ],
         "statistics": {
-          "assists": 21,
-          "assistsTurnoverRatio": 1.90909090909091,
+          "assists": 22,
+          "assistsTurnoverRatio": 2,
           "benchPoints": 76,
           "biggestLead": 10,
           "biggestLeadScore": "17-27",
@@ -107194,9 +107194,9 @@
           "biggestScoringRunScore": "17-27",
           "blocks": 6,
           "blocksReceived": 7,
-          "fastBreakPointsAttempted": 11,
-          "fastBreakPointsMade": 6,
-          "fastBreakPointsPercentage": 0.545454545454545,
+          "fastBreakPointsAttempted": 12,
+          "fastBreakPointsMade": 7,
+          "fastBreakPointsPercentage": 0.583333333333333,
           "fieldGoalsAttempted": 92,
           "fieldGoalsEffectiveAdjusted": 0.5,
           "fieldGoalsMade": 41,
@@ -107215,7 +107215,7 @@
           "minutesCalculated": "PT240M",
           "points": 111,
           "pointsAgainst": 114,
-          "pointsFastBreak": 16,
+          "pointsFastBreak": 18,
           "pointsFromTurnovers": 16,
           "pointsInThePaint": 52,
           "pointsInThePaintAttempted": 46,
@@ -127914,8 +127914,9 @@
           "teamTricode": "SAC",
           "actionType": "2pt",
           "subType": "DUNK",
-          "descriptor": "driving",
+          "descriptor": "running",
           "qualifiers": [
+            "fastbreak",
             "pointsinthepaint"
           ],
           "personId": 1642269,
@@ -127928,7 +127929,7 @@
           "possession": 1610612758,
           "scoreHome": "111",
           "scoreAway": "114",
-          "edited": "2026-02-07T05:39:03Z",
+          "edited": "2026-02-07T05:48:38Z",
           "orderNumber": 6660000,
           "isTargetScoreLastPeriod": false,
           "xLegacy": -15,
@@ -127936,12 +127937,16 @@
           "isFieldGoal": 1,
           "shotResult": "Made",
           "pointsTotal": 14,
-          "description": "D. Carter driving DUNK (14 PTS)",
+          "description": "D. Carter running DUNK (14 PTS) (M. Raynaud 2 AST)",
           "playerName": "Carter",
           "playerNameI": "D. Carter",
           "personIdsFilter": [
-            1642269
-          ]
+            1642269,
+            1642875
+          ],
+          "assistPlayerNameInitial": "M. Raynaud",
+          "assistPersonId": 1642875,
+          "assistTotal": 2
         },
         {
           "actionNumber": 674,
